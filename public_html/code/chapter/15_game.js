@@ -1,5 +1,6 @@
-//array di array
-var simpleLevelPlan = [//     ^ 
+//array di array, non usato davvero, e' solo un esempio di mappe
+//usate in game_levels.js
+var simpleLevelPlan = [   //     ^ 
     "                      ", // |
     "                      ", // |
     "  x              = x  ", // |
@@ -8,7 +9,7 @@ var simpleLevelPlan = [//     ^
     "  xxxxx            x  ", // |
     "      x!!!!!!!!!!!!x  ", // |
     "      xxxxxxxxxxxxxx  ", // |
-    "                      "//  |
+    "                      " //  |
 ];// <------------------------>
 //WIDTH
 
@@ -31,9 +32,11 @@ function Level(plan) {
             //coordinate x,y e il carattere trovato in plan
             if (Actor)
                 this.actors.push(new Actor(new Vector(x, y), ch));
-            else if (ch == "x")
+            //x e ! sono gli unici totalmente fissi, quindi non sono attori e
+            //quindi li tratto in modo diverso
+            else if (ch === "x")
                 fieldType = "wall";
-            else if (ch == "!")
+            else if (ch === "!")
                 fieldType = "lava";
             gridLine.push(fieldType);
         }
@@ -49,7 +52,7 @@ function Level(plan) {
     //NB: Suppongo che ci sia solo un player nel livello, cioe' che
     //la mappa del livello sia stata creata in modo corretto.
     this.player = this.actors.filter(function (actor) {
-        return actor.type == "player";
+        return actor.type === "player";
     })[0];
 
     //per sapere se il livello e' stato completato, cioe' 
@@ -62,7 +65,7 @@ function Level(plan) {
 
 //metodo per scoprire se il livello e' finito
 Level.prototype.isFinished = function () {
-    return this.status != null && this.finishDelay < 0;
+    return this.status !== null && this.finishDelay < 0;
 };
 
 function Vector(x, y) {
@@ -83,7 +86,8 @@ Vector.prototype.times = function (factor) {
 var actorChars = {
     "@": Player,
     "o": Coin,
-    "=": Lava, "|": Lava, "v": Lava
+    "=": Lava, "|": Lava, "v": Lava,
+    "s": Stalactite
 };
 
 //il giocatore e' alto 1,5 quadretti da dove appare il carattere @
@@ -104,11 +108,11 @@ Player.prototype.type = "player";
 function Lava(pos, ch) {
     this.pos = pos;
     this.size = new Vector(1, 1);
-    if (ch == "=") {
+    if (ch === "=") {
         this.speed = new Vector(2, 0);
-    } else if (ch == "|") {
+    } else if (ch === "|") {
         this.speed = new Vector(0, 2);
-    } else if (ch == "v") {
+    } else if (ch === "v") {
         this.speed = new Vector(0, 3);
         this.repeatPos = pos;
     }
@@ -116,6 +120,21 @@ function Lava(pos, ch) {
 
 //il tipo di Lava e' "lava" come stringa
 Lava.prototype.type = "lava";
+
+
+
+
+function Stalactite(pos, ch) {
+    this.pos = pos;
+    this.size = new Vector(1, 1);
+    if (ch === "s") {
+        this.speed = new Vector(0, 10);
+    }
+}
+
+//il tipo di Stalactite e' "stalactite" come stringa
+Stalactite.prototype.type = "stalactite";
+
 
 function Coin(pos) {
     this.basePos = this.pos = pos.plus(new Vector(0.2, 0.1));
@@ -277,7 +296,7 @@ Level.prototype.obstacleAt = function (pos, size) {
 Level.prototype.actorAt = function (actor) {
     for (var i = 0; i < this.actors.length; i++) {
         var other = this.actors[i];
-        if (other != actor &&
+        if (other !== actor &&
                 actor.pos.x + actor.size.x > other.pos.x &&
                 actor.pos.x < other.pos.x + other.size.x &&
                 actor.pos.y + actor.size.y > other.pos.y &&
@@ -292,7 +311,7 @@ Level.prototype.actorAt = function (actor) {
 var maxStep = 0.05;
 
 Level.prototype.animate = function (step, keys) {
-    if (this.status != null)
+    if (this.status !== null)
         this.finishDelay -= step;
 
     while (step > 0) {
@@ -312,6 +331,14 @@ Lava.prototype.act = function (step, level) {
         this.pos = this.repeatPos;
     else
         this.speed = this.speed.times(-1);
+};
+
+Stalactite.prototype.act = function (step, level) {
+    var newPos = this.pos.plus(this.speed.times(step));
+    if (!level.obstacleAt(newPos, this.size))
+        this.pos = newPos;
+    else if (this.repeatPos)
+        this.pos = this.repeatPos;
 };
 
 var wobbleSpeed = 8, wobbleDist = 0.07;
@@ -368,22 +395,22 @@ Player.prototype.act = function (step, level, keys) {
         level.playerTouched(otherActor.type, otherActor);
 
     // se player perde partita c'e' animazione apposta
-    if (level.status == "lost") {
+    if (level.status === "lost") {
         this.pos.y += step;
         this.size.y -= step;
     }
 };
 
 Level.prototype.playerTouched = function (type, actor) {
-    if (type == "lava" && this.status == null) {
+    if ((type === "lava" || type === "stalactite" ) && this.status === null) {
         this.status = "lost";
         this.finishDelay = 1;
-    } else if (type == "coin") {
+    } else if (type === "coin") {
         this.actors = this.actors.filter(function (other) {
-            return other != actor;
+            return other !== actor;
         });
         if (!this.actors.some(function (actor) {
-            return actor.type == "coin";
+            return actor.type === "coin";
         })) {
             this.status = "won";
             this.finishDelay = 1;
@@ -397,7 +424,7 @@ function trackKeys(codes) {
     var pressed = Object.create(null);
     function handler(event) {
         if (codes.hasOwnProperty(event.keyCode)) {
-            var down = event.type == "keydown";
+            var down = event.type === "keydown";
             pressed[codes[event.keyCode]] = down;
             event.preventDefault();
         }
@@ -419,7 +446,7 @@ function runAnimation(frameFunc) {
     var lastTime = null;
     function frame(time) {
         var stop = false;
-        if (lastTime != null) {
+        if (lastTime !== null) {
             var timeStep = Math.min(time - lastTime, 100) / 1000;
             stop = frameFunc(timeStep) === false;
         }
@@ -471,7 +498,7 @@ function runLevel(level, Display, andThen) {
     var arrows = trackKeys(arrowCodes);
 
     function animation(step) {
-        if (running == "pausing") {
+        if (running === "pausing") {
             running = "no";
             return false;
         }

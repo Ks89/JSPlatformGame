@@ -22,6 +22,10 @@ and open the template in the editor.
     background: rgb(255,100,100);
 }
 
+.stalactite {
+    background: rgb(128,128,128);
+}
+
 .wall {
     background: white;
 }
