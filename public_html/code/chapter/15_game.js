@@ -1,6 +1,6 @@
 //array di array, non usato davvero, e' solo un esempio di mappe
-//usate in game_levels.js
-var simpleLevelPlan = [   //     ^ 
+//usate in game_levels.js. E' comodo tenerlo qui per ora.
+var simpleLevelPlan = [//     ^ 
     "                      ", // |
     "                      ", // |
     "  x              = x  ", // |
@@ -21,29 +21,50 @@ function Level(plan) {
 
     for (var y = 0; y < this.height; y++) { //righe
         //ad ogni ciclo ci metto la riga in line
-        var line = plan[y], gridLine = [];
+        var line = plan[y];
+        var gridLine = [];
         for (var x = 0; x < this.width; x++) { //colonne
             //ad ogni ciclo interno prendo un carattere della riga in "line"
-            var ch = line[x], fieldType = null;
+            var ch = line[x];
+            var fieldType = null;
+            var nextCh = null;
+
+            if (ch === "s" && x + 1 < this.width) {
+                nextCh = line[x + 1];
+                console.log("ID: " + nextCh);
+            }
+
             //mi da l9oggetto che puo' essere Player, Coin o Lava.
             //actorChars e' una funzione che restituisce oggetti
             var Actor = actorChars[ch];
             //crea nuovo Actor e lo mette nel vettore con 
             //coordinate x,y e il carattere trovato in plan
-            if (Actor)
-                this.actors.push(new Actor(new Vector(x, y), ch));
+            if (Actor) {
+                if (!nextCh && isNumber(nextCh)) {
+                    this.actors.push(new Actor(new Vector(x, y), ch, nextCh));
+                } else {
+                    this.actors.push(new Actor(new Vector(x, y), ch));
+                }
             //x e ! sono gli unici totalmente fissi, quindi non sono attori e
             //quindi li tratto in modo diverso
-            else if (ch === "x")
+            } else if (ch === "x")
                 fieldType = "wall";
             else if (ch === "!")
                 fieldType = "lava";
+
             gridLine.push(fieldType);
         }
 
         //dato in "plan" la mappa del livello questo metodo crea "grid" 
         //sempre in array di array ma con contenuto nelle celle: wall,lava,null
         this.grid.push(gridLine);
+
+        function isNumber(o) {
+            //e' un numero (trucco trovato
+            //qui: http://stackoverflow.com/questions/1303646/check-whether-variable-is-number-or-string-in-javascript
+            return !isNaN(o - 0) && o !== null && o !== "" && o !== false;
+        }
+
     }
 
     //per trovare tra gli actors il player e salvarlo in player
@@ -124,9 +145,10 @@ Lava.prototype.type = "lava";
 
 
 
-function Stalactite(pos, ch) {
+function Stalactite(pos, ch, id) {
     this.pos = pos;
     this.size = new Vector(1, 1);
+    this.id = id;
     if (ch === "s") {
         this.speed = new Vector(0, 10);
     }
@@ -402,7 +424,7 @@ Player.prototype.act = function (step, level, keys) {
 };
 
 Level.prototype.playerTouched = function (type, actor) {
-    if ((type === "lava" || type === "stalactite" ) && this.status === null) {
+    if ((type === "lava" || type === "stalactite") && this.status === null) {
         this.status = "lost";
         this.finishDelay = 1;
     } else if (type === "coin") {
@@ -490,11 +512,11 @@ function runLevel(level, Display, andThen) {
             }
         }
     }
-    
+
     //registro il listener con handler definito sopra per interecettare
     //la pressione del tasto esc
     addEventListener("keydown", handleKey);
-    
+
     var arrows = trackKeys(arrowCodes);
 
     function animation(step) {
