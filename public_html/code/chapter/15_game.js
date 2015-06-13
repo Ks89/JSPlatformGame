@@ -28,11 +28,11 @@ function Level(plan) {
             //ad ogni ciclo interno prendo un carattere della riga in "line"
             var ch = line[x];
             var fieldType = null;
-            var nextCh = null; //carattere successivo, cioe' l'id (un numero)   
+            var id = null; //carattere successivo, cioe' l'id (un numero)   
 
-            if (ch === "s" && x + 1 < this.width) {
-                nextCh = line[x + 1];
-                console.log("ID: " + nextCh);
+            if ( (ch === "s" || ch === "a" ) && x + 1 < this.width) {
+                id = line[x + 1];
+                console.log("Char with ch: " + ch + " with ID=" + id + " in pos (x,y) = (" + x + "," + y + ")");
             }
 
             //mi da l'oggetto che puo' essere Player, Coin, Lava ecc...
@@ -42,10 +42,10 @@ function Level(plan) {
             //coordinate x,y e il carattere trovato in plan
             //eventualmente anche quello successivo che rappresenta l'id
             if (Actor) {
-                if (!nextCh && isNumber(nextCh)) {
+                if (isNumber(id)) {
                     //cioe' e' un actor con un id associato, il quale sara'
                     //anche in uno o piu' Animator, che attivano questo Actor a muoversi ecc..
-                    this.actors.push(new Actor(new Vector(x, y), ch, nextCh));
+                    this.actors.push(new Actor(new Vector(x, y), ch, id));
                 } else {
                     this.actors.push(new Actor(new Vector(x, y), ch));
                 }
@@ -60,7 +60,11 @@ function Level(plan) {
 
             var Animator = staticSmartObjectChars[ch];
             if(Animator) {
-                this.animators.push(new Animator(new Vector(x, y), ch, nextCh));
+                console.log("animator: " + id);
+                if (isNumber(id)) {
+                    console.log("animator added with ch: " + ch + " and with id: " + id);
+                    this.animators.push(new Animator(new Vector(x, y), ch, id));
+                }
             }
 
             //nella grid metto solo gli elementi statici come stringhe
@@ -68,19 +72,18 @@ function Level(plan) {
             gridLine.push(fieldType);
         }
 
-        for(var i=0; i<this.actors.length;i++) {
-            console.log("actors: " + this.actors[i].pos.x + " " + this.actors[i].pos.y);
-        }
+        //for(var i=0; i<this.actors.length;i++) {
+        //    console.log("actors: " + this.actors[i].pos.x + " " + this.actors[i].pos.y);
+        //}
 
-        for(var i=0; i<this.animators.length;i++) {
-            console.log("animators: " + this.animators[i].pos.x + " " + this.animators[i].pos.y);
-        }
+        //for(var i=0; i<this.animators.length;i++) {
+        //    console.log("animators: " + this.animators[i].pos.x + " " + this.animators[i].pos.y);
+        //}
                
 
         //dato in "plan" la mappa del livello questo metodo crea "grid" 
         //sempre in array di array ma con contenuto nelle celle: wall,lava,null
         this.grid.push(gridLine);
-
     }
 
     function isNumber(o) {
@@ -125,6 +128,16 @@ Vector.prototype.plus = function (other) {
 Vector.prototype.times = function (factor) {
     return new Vector(this.x * factor, this.y * factor);
 };
+
+function Animator(pos, ch, id) {
+    this.pos = pos;
+    this.ch = ch;
+    this.id = id;
+    this.size = new Vector(1, 1);
+}
+
+Animator.prototype.type = "animator";
+
 
 var actorChars = {
     "@": Player,
@@ -180,15 +193,6 @@ function Stalactite(pos, ch, id) {
 
 //il tipo di Stalactite e' "stalactite" come stringa
 Stalactite.prototype.type = "stalactite";
-
-
-function Animator(pos, id) {
-    this.pos = pos;
-    this.size = new Vector(1, 1);
-    this.id = id;
-}
-
-Animator.prototype.type = "animator";
 
 
 function Coin(pos) {
@@ -359,7 +363,20 @@ Level.prototype.actorAt = function (actor) {
             return other;
     }
 };
+    
 
+Level.prototype.animatorAt = function (actor) {
+    for (var i = 0; i < this.animators.length; i++) {
+        var animator = this.animators[i];
+        if (actor.pos.x + actor.size.x > animator.pos.x &&
+            actor.pos.x < animator.pos.x + animator.size.x &&
+            actor.pos.y + actor.size.y > animator.pos.y &&
+            actor.pos.y < animator.pos.y + animator.size.y) {
+        
+                return animator;
+        }
+    }
+};
 
 //actors and actions subsections
 //pag 288
@@ -419,8 +436,6 @@ Player.prototype.moveX = function (step, level, keys) {
     var newPos = this.pos.plus(motion);
     var obstacle = level.obstacleAt(newPos, this.size);
     if (obstacle) {
-        if (obstacle !== "wall")
-            console.log(obstacle);
         level.playerTouched(obstacle);
     } else {
         this.pos = newPos;
@@ -436,8 +451,6 @@ Player.prototype.moveY = function (step, level, keys) {
     var newPos = this.pos.plus(motion);
     var obstacle = level.obstacleAt(newPos, this.size);
     if (obstacle) {
-        if (obstacle !== "wall")
-            console.log(obstacle);
         level.playerTouched(obstacle);
         if (keys.up && this.speed.y > 0)
             this.speed.y = -jumpSpeed;
@@ -455,6 +468,12 @@ Player.prototype.act = function (step, level, keys) {
     var otherActor = level.actorAt(this);
     if (otherActor) //qui serve solo per prendere le monete
         level.playerTouched(otherActor.type, otherActor);
+    
+    
+    var otherAnimator = level.animatorAt(this);
+    if (otherAnimator) //qui serve solo per prendere le monete
+        level.playerTouchedAnimator(otherAnimator);
+    
 
     // se player perde partita c'e' animazione apposta
     if (level.status === "lost") {
@@ -465,12 +484,10 @@ Player.prototype.act = function (step, level, keys) {
 
 //se passo actor e' per prendere le monete, se no e' per lava, muri, stalattiti ecc
 Level.prototype.playerTouched = function (type, actor) {
-    if (type !== "wall") {
-        console.log("plater touched" + type);
-    }
     if ((type === "lava" || type === "stalactite") && this.status === null) {
         this.status = "lost";
         this.finishDelay = 1;
+        console.log("playertouched");
     } else if (type === "coin") {
         this.actors = this.actors.filter(function (other) {
             return other !== actor;
@@ -483,6 +500,25 @@ Level.prototype.playerTouched = function (type, actor) {
         }
     }
 };
+
+
+Level.prototype.playerTouchedAnimator = function (animator) {
+    var id = animator.id;
+
+    console.log("playerTouchedAnimator type  " + animator.type + " and id=" + id);
+    
+    var actorsFiltered = [];
+    for(var i=0; i<this.actors.length; i++) {
+        //ottengo la lista degli actor nel livello che hanno lo stesso id
+        //dell'animator, cioe' gli actors che devo animare
+        if(this.actors[i].id === id) {
+            console.log("actor filtered: " + this.actors[i].pos.x + "," + this.actors[i].pos.y);
+            actorsFiltered.push(this.actors[i]);
+        }
+    }
+    
+};
+
 
 var arrowCodes = {37: "left", 38: "up", 39: "right"};
 
