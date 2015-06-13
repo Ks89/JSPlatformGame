@@ -18,6 +18,7 @@ function Level(plan) {
     this.height = plan.length;
     this.grid = [];
     this.actors = [];
+    this.animator = [];
 
     for (var y = 0; y < this.height; y++) { //righe
         //ad ogni ciclo ci metto la riga in line
@@ -27,32 +28,40 @@ function Level(plan) {
             //ad ogni ciclo interno prendo un carattere della riga in "line"
             var ch = line[x];
             var fieldType = null;
-            var nextCh = null;
+            var nextCh = null; //carattere successivo, cioe' l'id (un numero)   
 
             if (ch === "s" && x + 1 < this.width) {
                 nextCh = line[x + 1];
                 console.log("ID: " + nextCh);
             }
 
-            //mi da l9oggetto che puo' essere Player, Coin o Lava.
+            //mi da l'oggetto che puo' essere Player, Coin, Lava ecc...
             //actorChars e' una funzione che restituisce oggetti
             var Actor = actorChars[ch];
             //crea nuovo Actor e lo mette nel vettore con 
             //coordinate x,y e il carattere trovato in plan
+            //eventualmente anche quello successivo che rappresenta l'id
             if (Actor) {
                 if (!nextCh && isNumber(nextCh)) {
                     this.actors.push(new Actor(new Vector(x, y), ch, nextCh));
+                    this.animator.push(new Animator(new Vector(x, y)),nextCh);
                 } else {
                     this.actors.push(new Actor(new Vector(x, y), ch));
                 }
-            //x e ! sono gli unici totalmente fissi, quindi non sono attori e
-            //quindi li tratto in modo diverso
+                
+                
+                //x e ! sono gli unici totalmente fissi, quindi non sono attori e
+                //quindi li tratto in modo diverso
             } else if (ch === "x")
                 fieldType = "wall";
             else if (ch === "!")
                 fieldType = "lava";
 
             gridLine.push(fieldType);
+        }
+
+        for(var i=0; i<this.actors.length;i++) {
+            console.log(this.actors[i].pos.x + " " + this.actors[i].pos.y);
         }
 
         //dato in "plan" la mappa del livello questo metodo crea "grid" 
@@ -108,10 +117,10 @@ var actorChars = {
     "@": Player,
     "o": Coin,
     "=": Lava, "|": Lava, "v": Lava,
-    "s": Stalactite
+    "s": Stalactite,
 };
 
-//il giocatore e' alto 1,5 quadretti da dove appare il carattere @
+//il giocatore e' alto 1,5 quadretti da dove appare il carattere @
 function Player(pos) {
     this.pos = pos.plus(new Vector(0, -0.5));
     this.size = new Vector(0.8, 1.5);
@@ -143,8 +152,6 @@ function Lava(pos, ch) {
 Lava.prototype.type = "lava";
 
 
-
-
 function Stalactite(pos, ch, id) {
     this.pos = pos;
     this.size = new Vector(1, 1);
@@ -156,6 +163,15 @@ function Stalactite(pos, ch, id) {
 
 //il tipo di Stalactite e' "stalactite" come stringa
 Stalactite.prototype.type = "stalactite";
+
+
+function Animator(pos, id) {
+    this.pos = pos;
+    this.size = new Vector(1, 1);
+    this.id = id;
+}
+
+Animator.prototype.type = "animator";
 
 
 function Coin(pos) {
@@ -339,6 +355,7 @@ Level.prototype.animate = function (step, keys) {
     while (step > 0) {
         var thisStep = Math.min(step, maxStep);
         this.actors.forEach(function (actor) {
+            console.log(actor.pos.x, actor.pos.y);
             actor.act(thisStep, this, keys);
         }, this);
         step -= thisStep;
