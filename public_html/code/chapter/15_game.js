@@ -18,7 +18,7 @@ function Level(plan) {
     this.height = plan.length;
     this.grid = [];
     this.actors = [];
-    this.animator = [];
+    this.animators = [];
 
     for (var y = 0; y < this.height; y++) { //righe
         //ad ogni ciclo ci metto la riga in line
@@ -43,13 +43,13 @@ function Level(plan) {
             //eventualmente anche quello successivo che rappresenta l'id
             if (Actor) {
                 if (!nextCh && isNumber(nextCh)) {
+                    //cioe' e' un actor con un id associato, il quale sara'
+                    //anche in uno o piu' Animator, che attivano questo Actor a muoversi ecc..
                     this.actors.push(new Actor(new Vector(x, y), ch, nextCh));
-                    this.animator.push(new Animator(new Vector(x, y)),nextCh);
                 } else {
                     this.actors.push(new Actor(new Vector(x, y), ch));
                 }
-                
-                
+
                 //x e ! sono gli unici totalmente fissi, quindi non sono attori e
                 //quindi li tratto in modo diverso
             } else if (ch === "x")
@@ -57,23 +57,36 @@ function Level(plan) {
             else if (ch === "!")
                 fieldType = "lava";
 
+
+            var Animator = staticSmartObjectChars[ch];
+            if(Animator) {
+                this.animators.push(new Animator(new Vector(x, y), ch, nextCh));
+            }
+
+            //nella grid metto solo gli elementi statici come stringhe
+            //per il resto l otengo negli array appositi
             gridLine.push(fieldType);
         }
 
         for(var i=0; i<this.actors.length;i++) {
-            console.log(this.actors[i].pos.x + " " + this.actors[i].pos.y);
+            console.log("actors: " + this.actors[i].pos.x + " " + this.actors[i].pos.y);
         }
+
+        for(var i=0; i<this.animators.length;i++) {
+            console.log("animators: " + this.animators[i].pos.x + " " + this.animators[i].pos.y);
+        }
+               
 
         //dato in "plan" la mappa del livello questo metodo crea "grid" 
         //sempre in array di array ma con contenuto nelle celle: wall,lava,null
         this.grid.push(gridLine);
 
-        function isNumber(o) {
-            //e' un numero (trucco trovato
-            //qui: http://stackoverflow.com/questions/1303646/check-whether-variable-is-number-or-string-in-javascript
-            return !isNaN(o - 0) && o !== null && o !== "" && o !== false;
-        }
+    }
 
+    function isNumber(o) {
+        //e' un numero (trucco trovato
+        //qui: http://stackoverflow.com/questions/1303646/check-whether-variable-is-number-or-string-in-javascript
+        return !isNaN(o - 0) && o !== null && o !== "" && o !== false;
     }
 
     //per trovare tra gli actors il player e salvarlo in player
@@ -117,7 +130,11 @@ var actorChars = {
     "@": Player,
     "o": Coin,
     "=": Lava, "|": Lava, "v": Lava,
-    "s": Stalactite,
+    "s": Stalactite
+};
+
+var staticSmartObjectChars = {
+    "a": Animator
 };
 
 //il giocatore e' alto 1,5 quadretti da dove appare il carattere @
@@ -343,6 +360,7 @@ Level.prototype.actorAt = function (actor) {
     }
 };
 
+
 //actors and actions subsections
 //pag 288
 
@@ -355,7 +373,7 @@ Level.prototype.animate = function (step, keys) {
     while (step > 0) {
         var thisStep = Math.min(step, maxStep);
         this.actors.forEach(function (actor) {
-            console.log(actor.pos.x, actor.pos.y);
+            //console.log(actor.pos.x, actor.pos.y);
             actor.act(thisStep, this, keys);
         }, this);
         step -= thisStep;
@@ -400,10 +418,13 @@ Player.prototype.moveX = function (step, level, keys) {
     var motion = new Vector(this.speed.x * step, 0);
     var newPos = this.pos.plus(motion);
     var obstacle = level.obstacleAt(newPos, this.size);
-    if (obstacle)
+    if (obstacle) {
+        if (obstacle !== "wall")
+            console.log(obstacle);
         level.playerTouched(obstacle);
-    else
+    } else {
         this.pos = newPos;
+    }
 };
 
 var gravity = 30;
@@ -415,6 +436,8 @@ Player.prototype.moveY = function (step, level, keys) {
     var newPos = this.pos.plus(motion);
     var obstacle = level.obstacleAt(newPos, this.size);
     if (obstacle) {
+        if (obstacle !== "wall")
+            console.log(obstacle);
         level.playerTouched(obstacle);
         if (keys.up && this.speed.y > 0)
             this.speed.y = -jumpSpeed;
@@ -430,7 +453,7 @@ Player.prototype.act = function (step, level, keys) {
     this.moveY(step, level, keys);
 
     var otherActor = level.actorAt(this);
-    if (otherActor)
+    if (otherActor) //qui serve solo per prendere le monete
         level.playerTouched(otherActor.type, otherActor);
 
     // se player perde partita c'e' animazione apposta
@@ -440,7 +463,11 @@ Player.prototype.act = function (step, level, keys) {
     }
 };
 
+//se passo actor e' per prendere le monete, se no e' per lava, muri, stalattiti ecc
 Level.prototype.playerTouched = function (type, actor) {
+    if (type !== "wall") {
+        console.log("plater touched" + type);
+    }
     if ((type === "lava" || type === "stalactite") && this.status === null) {
         this.status = "lost";
         this.finishDelay = 1;
