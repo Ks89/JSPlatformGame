@@ -188,6 +188,8 @@ function Stalactite(pos, ch, id) {
     if (ch === "s") {
         this.speed = new Vector(0, 10);
     }
+    //di default e' false perche' voglio che all'avvio le Stalactite siano ferme
+    //e cadano solo quando avvio l'animazione, toccando l'Animator.
     this.activation = false;
 }
 
@@ -391,7 +393,9 @@ Level.prototype.animate = function (step, keys) {
     while (step > 0) {
         var thisStep = Math.min(step, maxStep);
         this.actors.forEach(function (actor) {
-            //console.log(actor.pos.x, actor.pos.y);
+            //mi permette di animare solo gli actors con activation===true
+            //cioe' solo quelli abilitati di default, o abilitati grazie
+            //all'nimator che setta in modo manuale a true, l'activation.
             if(actor.activation === true) {
                 actor.act(thisStep, this, keys);
             }
