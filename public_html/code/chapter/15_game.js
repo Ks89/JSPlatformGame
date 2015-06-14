@@ -28,11 +28,13 @@ function Level(plan) {
             //ad ogni ciclo interno prendo un carattere della riga in "line"
             var ch = line[x];
             var fieldType = null;
-            var id = null; //carattere successivo, cioe' l'id (un numero)   
+            var id = null; //carattere successivo, cioe' l'id (un numero)  
+            var delay = null; //carattere successivo, cioe' il delay (un numero)
 
-            if ( (ch === "s" || ch === "a" ) && x + 1 < this.width) {
+            if ( (ch === "s" || ch === "a" ) && x + 1 < this.width && x + 2 < this.width) {
                 id = line[x + 1];
-                console.log("Char with ch: " + ch + " with ID=" + id + " in pos (x,y) = (" + x + "," + y + ")");
+                delay = line[x + 2];
+                //console.log("Char with ch: " + ch + " with ID=" + id + " and delay= " + delay + " in pos (x,y) = (" + x + "," + y + ")");
             }
 
             //mi da l'oggetto che puo' essere Player, Coin, Lava ecc...
@@ -42,10 +44,10 @@ function Level(plan) {
             //coordinate x,y e il carattere trovato in plan
             //eventualmente anche quello successivo che rappresenta l'id
             if (Actor) {
-                if (isNumber(id)) {
+                if (isNumber(id) && isNumber(delay)) {
                     //cioe' e' un actor con un id associato, il quale sara'
                     //anche in uno o piu' Animator, che attivano questo Actor a muoversi ecc..
-                    this.actors.push(new Actor(new Vector(x, y), ch, id));
+                    this.actors.push(new Actor(new Vector(x, y), ch, id, delay));
                 } else {
                     this.actors.push(new Actor(new Vector(x, y), ch));
                 }
@@ -60,10 +62,10 @@ function Level(plan) {
 
             var Animator = staticSmartObjectChars[ch];
             if(Animator) {
-                console.log("animator: " + id);
-                if (isNumber(id)) {
-                    console.log("animator added with ch: " + ch + " and with id: " + id);
-                    this.animators.push(new Animator(new Vector(x, y), ch, id));
+                //console.log("animator: " + id + ", delay: " + delay);
+                if (isNumber(id), isNumber(delay)) {
+                    //console.log("animator added with ch: " + ch + " and with id: " + id + " and delay: " + delay);
+                    this.animators.push(new Animator(new Vector(x, y), ch, id, delay));
                 }
             }
 
@@ -111,6 +113,7 @@ function Actor(pos, ch, id) {
     this.id = id;
 }
 
+
 function Vector(x, y) {
     this.x = x;
     this.y = y;
@@ -126,11 +129,12 @@ Vector.prototype.times = function (factor) {
     return new Vector(this.x * factor, this.y * factor);
 };
 
-function Animator(pos, ch, id) {
+function Animator(pos, ch, id, delay) {
     this.pos = pos;
     this.ch = ch;
     this.id = id;
     this.size = new Vector(1, 1);
+    this.delay = delay;
 }
 
 Animator.prototype.type = "animator";
@@ -155,11 +159,11 @@ function Player(pos) {
     //velocita' corrente che permette di simulare movimento e gravita'
     this.speed = new Vector(0, 0);
     this.activation = true;
+    this.delayActivation = 0;
 }
-
-
 //il tipo di Player e' "player" come stringa
 Player.prototype.type = "player";
+
 
 //La creazione della lava dipende dal carattere "ch"
 //cioe' se e' fissa o si muove
@@ -175,13 +179,14 @@ function Lava(pos, ch) {
         this.repeatPos = pos;
     }
     this.activation = true;
+    this.delayActivation = 0;
 }
 
 //il tipo di Lava e' "lava" come stringa
 Lava.prototype.type = "lava";
 
 
-function Stalactite(pos, ch, id) {
+function Stalactite(pos, ch, id, delay) {
     this.pos = pos;
     this.size = new Vector(1, 1);
     this.id = id;
@@ -191,11 +196,16 @@ function Stalactite(pos, ch, id) {
     //di default e' false perche' voglio che all'avvio le Stalactite siano ferme
     //e cadano solo quando avvio l'animazione, toccando l'Animator.
     this.activation = false;
+    this.delayActivation = delay * 10;
 }
+
 
 //il tipo di Stalactite e' "stalactite" come stringa
 Stalactite.prototype.type = "stalactite";
 
+Stalactite.prototype.decrementDelay = function() {
+     this.delayActivation = this.delayActivation - 1; ;
+};
 
 function Coin(pos) {
     this.basePos = this.pos = pos.plus(new Vector(0.2, 0.1));
@@ -208,6 +218,7 @@ function Coin(pos) {
     //per la larghezza della fase del seno, cioe' 2PIGreco
     this.wobble = Math.random() * Math.PI * 2;
     this.activation = true;
+    this.delayActivation = 0;
 }
 Coin.prototype.type = "coin";
 
@@ -397,7 +408,14 @@ Level.prototype.animate = function (step, keys) {
             //cioe' solo quelli abilitati di default, o abilitati grazie
             //all'nimator che setta in modo manuale a true, l'activation.
             if(actor.activation === true) {
-                actor.act(thisStep, this, keys);
+                if(actor.type === "stalactite" && actor.delayActivation > 0) {
+                    //console.log("actor type: " + actor.type +  ", id: " + actor.id + ", delay before= " + actor.delayActivation);
+                    actor.decrementDelay();
+                    //console.log("actor type: " + actor.type +  ", id: " + actor.id + ", delay after= " + actor.delayActivation);
+                }
+                if(actor.delayActivation === 0) {
+                    actor.act(thisStep, this, keys);
+                }
             }
         }, this);
         step -= thisStep;
@@ -494,7 +512,7 @@ Level.prototype.playerTouched = function (type, actor) {
     if ((type === "lava" || type === "stalactite") && this.status === null) {
         this.status = "lost";
         this.finishDelay = 1;
-        console.log("playertouched");
+        //console.log("playertouched");
     } else if (type === "coin") {
         this.actors = this.actors.filter(function (other) {
             return other !== actor;
@@ -512,7 +530,7 @@ Level.prototype.playerTouched = function (type, actor) {
 Level.prototype.playerTouchedAnimator = function (animator) {
     var id = animator.id;
 
-    console.log("playerTouchedAnimator type  " + animator.type + " and id=" + id);
+    //console.log("playerTouchedAnimator type  " + animator.type + " and id=" + id);
     
     //ottengo la lista degli actor nel livello che hanno lo stesso id
     //dell'animator, cioe' gli actors che devo animare
@@ -523,7 +541,7 @@ Level.prototype.playerTouchedAnimator = function (animator) {
     //stampo la lista degli actors che devo animare, perche' hanno lo stesso
     //id dell'animator che il player ha toccato
     actorsFiltered.forEach(function (actor) {
-            console.log("actor filtered: " + actor.pos.x + "," + actor.pos.y);
+            //console.log("actor filtered: " + actor.pos.x + "," + actor.pos.y);
             actor.activation = true;
     });
 };
