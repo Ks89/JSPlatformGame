@@ -507,16 +507,17 @@ Level.prototype.playerTouchedAnimator = function (animator) {
 
     console.log("playerTouchedAnimator type  " + animator.type + " and id=" + id);
     
-    var actorsFiltered = [];
-    for(var i=0; i<this.actors.length; i++) {
-        //ottengo la lista degli actor nel livello che hanno lo stesso id
-        //dell'animator, cioe' gli actors che devo animare
-        if(this.actors[i].id === id) {
-            console.log("actor filtered: " + this.actors[i].pos.x + "," + this.actors[i].pos.y);
-            actorsFiltered.push(this.actors[i]);
-        }
-    }
+    //ottengo la lista degli actor nel livello che hanno lo stesso id
+    //dell'animator, cioe' gli actors che devo animare
+    var actorsFiltered = this.actors.filter(function(actor){
+        return actor.id === id;
+    });
     
+    //stampo la lista degli actors che devo animare, perche' hanno lo stesso
+    //id dell'animator che il player ha toccato
+    actorsFiltered.forEach(function (actor) {
+            console.log("actor filtered: " + actor.pos.x + "," + actor.pos.y);
+    });
 };
 
 
