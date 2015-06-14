@@ -71,16 +71,7 @@ function Level(plan) {
             //per il resto l otengo negli array appositi
             gridLine.push(fieldType);
         }
-
-        //for(var i=0; i<this.actors.length;i++) {
-        //    console.log("actors: " + this.actors[i].pos.x + " " + this.actors[i].pos.y);
-        //}
-
-        //for(var i=0; i<this.animators.length;i++) {
-        //    console.log("animators: " + this.animators[i].pos.x + " " + this.animators[i].pos.y);
-        //}
-               
-
+        
         //dato in "plan" la mappa del livello questo metodo crea "grid" 
         //sempre in array di array ma con contenuto nelle celle: wall,lava,null
         this.grid.push(gridLine);
@@ -113,6 +104,12 @@ function Level(plan) {
 Level.prototype.isFinished = function () {
     return this.status !== null && this.finishDelay < 0;
 };
+
+function Actor(pos, ch, id) {
+    this.pos = pos;
+    this.ch = ch;
+    this.id = id;
+}
 
 function Vector(x, y) {
     this.x = x;
@@ -157,6 +154,7 @@ function Player(pos) {
 
     //velocita' corrente che permette di simulare movimento e gravita'
     this.speed = new Vector(0, 0);
+    this.activation = true;
 }
 
 
@@ -176,6 +174,7 @@ function Lava(pos, ch) {
         this.speed = new Vector(0, 3);
         this.repeatPos = pos;
     }
+    this.activation = true;
 }
 
 //il tipo di Lava e' "lava" come stringa
@@ -189,6 +188,7 @@ function Stalactite(pos, ch, id) {
     if (ch === "s") {
         this.speed = new Vector(0, 10);
     }
+    this.activation = false;
 }
 
 //il tipo di Stalactite e' "stalactite" come stringa
@@ -205,6 +205,7 @@ function Coin(pos) {
     //si muovino in modo sincronizzato. Cioe' moltiplico random
     //per la larghezza della fase del seno, cioe' 2PIGreco
     this.wobble = Math.random() * Math.PI * 2;
+    this.activation = true;
 }
 Coin.prototype.type = "coin";
 
@@ -391,7 +392,9 @@ Level.prototype.animate = function (step, keys) {
         var thisStep = Math.min(step, maxStep);
         this.actors.forEach(function (actor) {
             //console.log(actor.pos.x, actor.pos.y);
-            actor.act(thisStep, this, keys);
+            if(actor.activation === true) {
+                actor.act(thisStep, this, keys);
+            }
         }, this);
         step -= thisStep;
     }
@@ -517,6 +520,7 @@ Level.prototype.playerTouchedAnimator = function (animator) {
     //id dell'animator che il player ha toccato
     actorsFiltered.forEach(function (actor) {
             console.log("actor filtered: " + actor.pos.x + "," + actor.pos.y);
+            actor.activation = true;
     });
 };
 
