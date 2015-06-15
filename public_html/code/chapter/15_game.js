@@ -20,6 +20,13 @@ function Level(plan) {
     this.actors = [];
     this.animators = [];
 
+    //remember, in map:
+    //sxy with x,y numbers means that s=talactite, with id=x and delay=y
+    //the same things for animator, with a=animator.
+    //by default, axy is x=id and y=0, because adding more delay isn't really necessary.
+    //delay connected to animator isn't implemented, bacause not necessary, at the moment.
+
+
     for (var y = 0; y < this.height; y++) { //righe
         //ad ogni ciclo ci metto la riga in line
         var line = plan[y];
@@ -34,6 +41,7 @@ function Level(plan) {
             if ( (ch === "s" || ch === "a" ) && x + 1 < this.width && x + 2 < this.width) {
                 id = line[x + 1];
                 delay = line[x + 2];
+                console.log("ch: " + ch + ", id: " + id + ", delay: " + delay);
                 //console.log("Char with ch: " + ch + " with ID=" + id + " and delay= " + delay + " in pos (x,y) = (" + x + "," + y + ")");
             }
 
@@ -43,8 +51,12 @@ function Level(plan) {
             //crea nuovo Actor e lo mette nel vettore con 
             //coordinate x,y e il carattere trovato in plan
             //eventualmente anche quello successivo che rappresenta l'id
+            
             if (Actor) {
+                console.log("actor: id: " + id + ", delay: " + delay);
+                console.log("inNumber id: " + isNumber(id) + "  ,  delay: " + isNumber(delay));
                 if (isNumber(id) && isNumber(delay)) {
+                    console.log("actor with numerical id and delay");
                     //cioe' e' un actor con un id associato, il quale sara'
                     //anche in uno o piu' Animator, che attivano questo Actor a muoversi ecc..
                     this.actors.push(new Actor(new Vector(x, y), ch, id, delay));
@@ -59,18 +71,15 @@ function Level(plan) {
             else if (ch === "!")
                 fieldType = "lava";
 
-
             var Animator = staticSmartObjectChars[ch];
             if(Animator) {
                 //console.log("animator: " + id + ", delay: " + delay);
-                if (isNumber(id), isNumber(delay)) {
+                if (isNumber(id) && isNumber(delay)) {
                     //console.log("animator added with ch: " + ch + " and with id: " + id + " and delay: " + delay);
                     this.animators.push(new Animator(new Vector(x, y), ch, id, delay));
                 }
             }
-
-            //nella grid metto solo gli elementi statici come stringhe
-            //per il resto l otengo negli array appositi
+            
             gridLine.push(fieldType);
         }
         
@@ -79,10 +88,9 @@ function Level(plan) {
         this.grid.push(gridLine);
     }
 
-    function isNumber(o) {
-        //e' un numero (trucco trovato
-        //qui: http://stackoverflow.com/questions/1303646/check-whether-variable-is-number-or-string-in-javascript
-        return !isNaN(o - 0) && o !== null && o !== "" && o !== false;
+    function isNumber(ch) {
+        return ch==="0" || ch==="1" || ch==="2" || ch==="3" || ch==="4" 
+                || ch==="5" || ch==="6" || ch==="7" || ch==="8" || ch==="9";
     }
 
     //per trovare tra gli actors il player e salvarlo in player
