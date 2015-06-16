@@ -42,6 +42,10 @@ and open the template in the editor.
     background: rgb(64,64,64);
 }
 
+.enemy {
+    background: #00cc00;
+}
+
 .lost .player {
     background: rgb(160,64,64);
 }

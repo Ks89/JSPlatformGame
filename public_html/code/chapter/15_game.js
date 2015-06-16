@@ -38,7 +38,7 @@ function Level(plan) {
             var id = null; //carattere successivo, cioe' l'id (un numero)  
             var delay = null; //carattere successivo, cioe' il delay (un numero)
 
-            if ( (ch === "s" || ch === "a" ) && x + 1 < this.width && x + 2 < this.width) {
+            if ( (ch === "s" || ch === "a" || ch === "e" ) && x + 1 < this.width && x + 2 < this.width) {
                 id = line[x + 1];
                 delay = line[x + 2];
                 console.log("ch: " + ch + ", id: " + id + ", delay: " + delay);
@@ -152,7 +152,8 @@ var actorChars = {
     "@": Player,
     "o": Coin,
     "=": Lava, "|": Lava, "v": Lava,
-    "s": Stalactite
+    "s": Stalactite,
+    "e": Enemy
 };
 
 var staticSmartObjectChars = {
@@ -172,6 +173,19 @@ function Player(pos) {
 //il tipo di Player e' "player" come stringa
 Player.prototype.type = "player";
 
+function Enemy(pos, ch, id, delay) {
+    this.pos = pos;
+    this.size = new Vector(1, 1);
+    this.id = id;
+    this.activation = true;
+    this.delayActivation = delay;
+    this.speed = new Vector(6, 0);
+}
+Enemy.prototype.type = "enemy";
+
+Enemy.prototype.decrementDelay = function() {
+     this.delayActivation = this.delayActivation - 1; ;
+};
 
 //La creazione della lava dipende dal carattere "ch"
 //cioe' se e' fissa o si muove
@@ -416,7 +430,7 @@ Level.prototype.animate = function (step, keys) {
             //cioe' solo quelli abilitati di default, o abilitati grazie
             //all'nimator che setta in modo manuale a true, l'activation.
             if(actor.activation === true) {
-                if(actor.type === "stalactite" && actor.delayActivation > 0) {
+                if( (actor.type === "stalactite" || actor.type === "enemy") && actor.delayActivation > 0) {
                     //console.log("actor type: " + actor.type +  ", id: " + actor.id + ", delay before= " + actor.delayActivation);
                     actor.decrementDelay();
                     //console.log("actor type: " + actor.type +  ", id: " + actor.id + ", delay after= " + actor.delayActivation);
@@ -431,6 +445,16 @@ Level.prototype.animate = function (step, keys) {
 };
 
 Lava.prototype.act = function (step, level) {
+    var newPos = this.pos.plus(this.speed.times(step));
+    if (!level.obstacleAt(newPos, this.size))
+        this.pos = newPos;
+    else if (this.repeatPos)
+        this.pos = this.repeatPos;
+    else
+        this.speed = this.speed.times(-1);
+};
+
+Enemy.prototype.act = function (step, level) {
     var newPos = this.pos.plus(this.speed.times(step));
     if (!level.obstacleAt(newPos, this.size))
         this.pos = newPos;
@@ -517,7 +541,7 @@ Player.prototype.act = function (step, level, keys) {
 
 //se passo actor e' per prendere le monete, se no e' per lava, muri, stalattiti ecc
 Level.prototype.playerTouched = function (type, actor) {
-    if ((type === "lava" || type === "stalactite") && this.status === null) {
+    if ((type === "lava" || type === "stalactite" || type === "enemy") && this.status === null) {
         this.status = "lost";
         this.finishDelay = 1;
         //console.log("playertouched");
