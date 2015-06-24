@@ -416,7 +416,6 @@ Level.prototype.animatorAt = function (actor) {
 
 //actors and actions subsections
 //pag 288
-
 var maxStep = 0.05;
 
 Level.prototype.animate = function (step, keys) {
@@ -456,7 +455,15 @@ Lava.prototype.act = function (step, level) {
 
 Enemy.prototype.act = function (step, level) {
     var newPos = this.pos.plus(this.speed.times(step));
-    if (!level.obstacleAt(newPos, this.size))
+    
+    //now i compute a new position under the enemy's feet
+    var tempPos = newPos.plus(new Vector(0, 0.01 * 100));
+    
+    //console.log("newpos: (" + newPos.x + " , " + newPos.y + ") ----- tempPos: (" + tempPos.x + " , " + tempPos.y + ")" +  " ---- Obstacle in tempPos: " + level.obstacleAt(tempPos, this.size));
+        
+    //if there aren't obstacles at newPos (horizontally) AND
+    //if under the enemy's feet there isn't wall / ground
+    if (!level.obstacleAt(newPos, this.size) && level.obstacleAt(tempPos, this.size))
         this.pos = newPos;
     else if (this.repeatPos)
         this.pos = this.repeatPos;
@@ -528,7 +535,7 @@ Player.prototype.act = function (step, level, keys) {
     
     
     var otherAnimator = level.animatorAt(this);
-    if (otherAnimator) //qui serve solo per prendere le monete
+    if (otherAnimator)
         level.playerTouchedAnimator(otherAnimator);
     
 
@@ -561,8 +568,6 @@ Level.prototype.playerTouched = function (type, actor) {
 
 Level.prototype.playerTouchedAnimator = function (animator) {
     var id = animator.id;
-
-    //console.log("playerTouchedAnimator type  " + animator.type + " and id=" + id);
     
     //ottengo la lista degli actor nel livello che hanno lo stesso id
     //dell'animator, cioe' gli actors che devo animare
