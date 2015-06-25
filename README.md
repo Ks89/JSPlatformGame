@@ -11,6 +11,7 @@ I'm working on this only when i have free time, for example on the train :)
 
 
 # News
+- 06/25/2015 - Alpha 3
 - 06/24/2015 - Alpha 2
 - 06/15/2015 - Alpha 1
 
