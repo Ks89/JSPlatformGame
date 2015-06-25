@@ -1,17 +1,18 @@
-//array di array, non usato davvero, e' solo un esempio di mappe
-//usate in game_levels.js. E' comodo tenerlo qui per ora.
-var simpleLevelPlan = [//     ^ 
-    "                      ", // |
-    "                      ", // |
-    "  x              = x  ", // |
-    "  x         o o    x  ", // |
-    "  x @      xxxxx   x  ", // |  HEIGHT
-    "  xxxxx            x  ", // |
-    "      x!!!!!!!!!!!!x  ", // |
-    "      xxxxxxxxxxxxxx  ", // |
-    "                      " //  |
-];// <------------------------>
-//WIDTH
+/*
+Copyright 2015 Stefano Cappa
+
+Licensed under the Apache License, Version 2.0 (the "License");
+
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 
 function Level(plan) {
     this.width = plan[0].length;
@@ -180,11 +181,16 @@ function Enemy(pos, ch, id, delay) {
     this.activation = true;
     this.delayActivation = delay;
     this.speed = new Vector(6, 0);
+    this.health = 1;
 }
 Enemy.prototype.type = "enemy";
 
 Enemy.prototype.decrementDelay = function() {
      this.delayActivation = this.delayActivation - 1; ;
+};
+
+Enemy.prototype.decrementHealth = function() {
+     this.health = this.health - 1; ;
 };
 
 //La creazione della lava dipende dal carattere "ch"
@@ -243,8 +249,6 @@ function Coin(pos) {
     this.delayActivation = 0;
 }
 Coin.prototype.type = "coin";
-
-var simpleLevel = new Level(simpleLevelPlan);
 
 //funzione che crea un elemento e lo restituisce come classe
 function elt(name, className) {
@@ -530,6 +534,19 @@ Player.prototype.act = function (step, level, keys) {
     this.moveY(step, level, keys);
 
     var otherActor = level.actorAt(this);
+    
+    
+    //TODO Here i can catch if player jumped over an enemy BUT ALSO IF A PLAYER
+    //TOUCH AN ENEMY HORIZONTALLY.
+    //attention, this will called several times (>30 times).
+    //and this condition will be true several times ;)
+    //NOW I MUST IMPLEMENT THE LOGIC TO CATCH ONLY ONE OF THESE EVENTS (ONLY VERTICALLY)
+    //AND I MUST REDUCE ENEMY'S HEALTH. 
+    //FINALLY, I CAN CREATE A SPRING EFFECT jumping over an enemy.
+    if(otherActor && otherActor.type === "enemy") {
+        console.log("JUMPED ON AN ENEMY");
+    }
+    
     if (otherActor) //qui serve solo per prendere le monete
         level.playerTouched(otherActor.type, otherActor);
     
