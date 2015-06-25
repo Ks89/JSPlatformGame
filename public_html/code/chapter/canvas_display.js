@@ -154,7 +154,18 @@ CanvasDisplay.prototype.drawActors = function () {
         if (actor.type === "player") {
             this.drawPlayer(x, y, width, height);
         } else {
-            var tileX = (actor.type === "coin" ? 2 : 1) * scale;
+            var tileX;
+            
+            if (actor.type === "lava") {
+                tileX = 1 * scale;
+            } else if (actor.type === "stalactite") {
+                tileX = 2 * scale;
+            } else if (actor.type === "enemy") {
+                tileX = 3 * scale;
+            } if (actor.type === "coin") {
+                tileX = 4 * scale;
+            }  
+            
             this.cx.drawImage(otherSprites,
                     tileX, 0, width, height,
                     x, y, width, height);
