@@ -1,17 +1,17 @@
 /*
-Copyright 2015 Stefano Cappa
-
-Licensed under the Apache License, Version 2.0 (the "License");
-
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ Copyright 2015 Stefano Cappa
+ 
+ Licensed under the Apache License, Version 2.0 (the "License");
+ 
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
 
 
 function Level(plan) {
@@ -39,7 +39,7 @@ function Level(plan) {
             var id = null; //carattere successivo, cioe' l'id (un numero)  
             var delay = null; //carattere successivo, cioe' il delay (un numero)
 
-            if ( (ch === "s" || ch === "a" || ch === "e" ) && x + 1 < this.width && x + 2 < this.width) {
+            if ((ch === "s" || ch === "a" || ch === "e") && x + 1 < this.width && x + 2 < this.width) {
                 id = line[x + 1];
                 delay = line[x + 2];
                 console.log("ch: " + ch + ", id: " + id + ", delay: " + delay);
@@ -52,7 +52,7 @@ function Level(plan) {
             //crea nuovo Actor e lo mette nel vettore con 
             //coordinate x,y e il carattere trovato in plan
             //eventualmente anche quello successivo che rappresenta l'id
-            
+
             if (Actor) {
                 console.log("actor: id: " + id + ", delay: " + delay);
                 console.log("inNumber id: " + isNumber(id) + "  ,  delay: " + isNumber(delay));
@@ -73,25 +73,25 @@ function Level(plan) {
                 fieldType = "lava";
 
             var Animator = staticSmartObjectChars[ch];
-            if(Animator) {
+            if (Animator) {
                 //console.log("animator: " + id + ", delay: " + delay);
                 if (isNumber(id) && isNumber(delay)) {
                     //console.log("animator added with ch: " + ch + " and with id: " + id + " and delay: " + delay);
                     this.animators.push(new Animator(new Vector(x, y), ch, id, delay));
                 }
             }
-            
+
             gridLine.push(fieldType);
         }
-        
+
         //dato in "plan" la mappa del livello questo metodo crea "grid" 
         //sempre in array di array ma con contenuto nelle celle: wall,lava,null
         this.grid.push(gridLine);
     }
 
     function isNumber(ch) {
-        return ch==="0" || ch==="1" || ch==="2" || ch==="3" || ch==="4" 
-                || ch==="5" || ch==="6" || ch==="7" || ch==="8" || ch==="9";
+        return ch === "0" || ch === "1" || ch === "2" || ch === "3" || ch === "4"
+                || ch === "5" || ch === "6" || ch === "7" || ch === "8" || ch === "9";
     }
 
     //per trovare tra gli actors il player e salvarlo in player
@@ -185,12 +185,14 @@ function Enemy(pos, ch, id, delay) {
 }
 Enemy.prototype.type = "enemy";
 
-Enemy.prototype.decrementDelay = function() {
-     this.delayActivation = this.delayActivation - 1; ;
+Enemy.prototype.decrementDelay = function () {
+    this.delayActivation = this.delayActivation - 1;
+    ;
 };
 
-Enemy.prototype.decrementHealth = function() {
-     this.health = this.health - 1; ;
+Enemy.prototype.decrementHealth = function () {
+    this.health = this.health - 1;
+    ;
 };
 
 //La creazione della lava dipende dal carattere "ch"
@@ -231,8 +233,9 @@ function Stalactite(pos, ch, id, delay) {
 //il tipo di Stalactite e' "stalactite" come stringa
 Stalactite.prototype.type = "stalactite";
 
-Stalactite.prototype.decrementDelay = function() {
-     this.delayActivation = this.delayActivation - 1; ;
+Stalactite.prototype.decrementDelay = function () {
+    this.delayActivation = this.delayActivation - 1;
+    ;
 };
 
 function Coin(pos) {
@@ -403,17 +406,17 @@ Level.prototype.actorAt = function (actor) {
             return other;
     }
 };
-    
+
 
 Level.prototype.animatorAt = function (actor) {
     for (var i = 0; i < this.animators.length; i++) {
         var animator = this.animators[i];
         if (actor.pos.x + actor.size.x > animator.pos.x &&
-            actor.pos.x < animator.pos.x + animator.size.x &&
-            actor.pos.y + actor.size.y > animator.pos.y &&
-            actor.pos.y < animator.pos.y + animator.size.y) {
-        
-                return animator;
+                actor.pos.x < animator.pos.x + animator.size.x &&
+                actor.pos.y + actor.size.y > animator.pos.y &&
+                actor.pos.y < animator.pos.y + animator.size.y) {
+
+            return animator;
         }
     }
 };
@@ -432,13 +435,13 @@ Level.prototype.animate = function (step, keys) {
             //mi permette di animare solo gli actors con activation===true
             //cioe' solo quelli abilitati di default, o abilitati grazie
             //all'nimator che setta in modo manuale a true, l'activation.
-            if(actor.activation === true) {
-                if( (actor.type === "stalactite" || actor.type === "enemy") && actor.delayActivation > 0) {
+            if (actor.activation === true) {
+                if ((actor.type === "stalactite" || actor.type === "enemy") && actor.delayActivation > 0) {
                     //console.log("actor type: " + actor.type +  ", id: " + actor.id + ", delay before= " + actor.delayActivation);
                     actor.decrementDelay();
                     //console.log("actor type: " + actor.type +  ", id: " + actor.id + ", delay after= " + actor.delayActivation);
                 }
-                if(actor.delayActivation === 0) {
+                if (actor.delayActivation === 0) {
                     actor.act(thisStep, this, keys);
                 }
             }
@@ -459,12 +462,12 @@ Lava.prototype.act = function (step, level) {
 
 Enemy.prototype.act = function (step, level) {
     var newPos = this.pos.plus(this.speed.times(step));
-    
+
     //now i compute a new position under the enemy's feet
     var tempPos = newPos.plus(new Vector(0, 0.01 * 100));
-    
+
     //console.log("newpos: (" + newPos.x + " , " + newPos.y + ") ----- tempPos: (" + tempPos.x + " , " + tempPos.y + ")" +  " ---- Obstacle in tempPos: " + level.obstacleAt(tempPos, this.size));
-        
+
     //if there aren't obstacles at newPos (horizontally) AND
     //if under the enemy's feet there isn't wall / ground
     if (!level.obstacleAt(newPos, this.size) && level.obstacleAt(tempPos, this.size))
@@ -534,8 +537,8 @@ Player.prototype.act = function (step, level, keys) {
     this.moveY(step, level, keys);
 
     var otherActor = level.actorAt(this);
-    
-    
+
+
     //TODO Here i can catch if player jumped over an enemy BUT ALSO IF A PLAYER
     //TOUCH AN ENEMY HORIZONTALLY.
     //attention, this will called several times (>30 times).
@@ -543,18 +546,18 @@ Player.prototype.act = function (step, level, keys) {
     //NOW I MUST IMPLEMENT THE LOGIC TO CATCH ONLY ONE OF THESE EVENTS (ONLY VERTICALLY)
     //AND I MUST REDUCE ENEMY'S HEALTH. 
     //FINALLY, I CAN CREATE A SPRING EFFECT jumping over an enemy.
-    if(otherActor && otherActor.type === "enemy") {
+    if (otherActor && otherActor.type === "enemy") {
         console.log("JUMPED ON AN ENEMY");
     }
-    
+
     if (otherActor) //qui serve solo per prendere le monete
         level.playerTouched(otherActor.type, otherActor);
-    
-    
+
+
     var otherAnimator = level.animatorAt(this);
     if (otherAnimator)
         level.playerTouchedAnimator(otherAnimator);
-    
+
 
     // se player perde partita c'e' animazione apposta
     if (level.status === "lost") {
@@ -585,18 +588,18 @@ Level.prototype.playerTouched = function (type, actor) {
 
 Level.prototype.playerTouchedAnimator = function (animator) {
     var id = animator.id;
-    
+
     //ottengo la lista degli actor nel livello che hanno lo stesso id
     //dell'animator, cioe' gli actors che devo animare
-    var actorsFiltered = this.actors.filter(function(actor){
+    var actorsFiltered = this.actors.filter(function (actor) {
         return actor.id === id;
     });
-    
+
     //stampo la lista degli actors che devo animare, perche' hanno lo stesso
     //id dell'animator che il player ha toccato
     actorsFiltered.forEach(function (actor) {
-            //console.log("actor filtered: " + actor.pos.x + "," + actor.pos.y);
-            actor.activation = true;
+        //console.log("actor filtered: " + actor.pos.x + "," + actor.pos.y);
+        actor.activation = true;
     });
 };
 
@@ -723,3 +726,5 @@ function runGame(plans, Display) {
     }
     startLevel(0);
 }
+
+
