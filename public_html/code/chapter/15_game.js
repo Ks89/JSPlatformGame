@@ -20,6 +20,9 @@ function Level(plan) {
     this.grid = [];
     this.actors = [];
     this.animators = [];
+    
+    //default: false because player isn't jumping over an enemy
+    this.jumpOnEnemySwitch = false;
 
     //remember, in map:
     //sxy with x,y numbers means that s=talactite, with id=x and delay=y
@@ -181,18 +184,16 @@ function Enemy(pos, ch, id, delay) {
     this.activation = true;
     this.delayActivation = delay;
     this.speed = new Vector(6, 0);
-    this.health = 1;
+    this.health = 2;
 }
 Enemy.prototype.type = "enemy";
 
 Enemy.prototype.decrementDelay = function () {
     this.delayActivation = this.delayActivation - 1;
-    ;
 };
 
 Enemy.prototype.decrementHealth = function () {
     this.health = this.health - 1;
-    ;
 };
 
 //La creazione della lava dipende dal carattere "ch"
@@ -546,14 +547,34 @@ Player.prototype.act = function (step, level, keys) {
     //NOW I MUST IMPLEMENT THE LOGIC TO CATCH ONLY ONE OF THESE EVENTS (ONLY VERTICALLY)
     //AND I MUST REDUCE ENEMY'S HEALTH. 
     //FINALLY, I CAN CREATE A SPRING EFFECT jumping over an enemy.
-    if (otherActor && otherActor.type === "enemy") {
-        console.log("JUMPED ON AN ENEMY");
+    if (otherActor && otherActor.type === "enemy" && this.speed.y> 5) {
+        console.log("FIRST IF WITH speed y = " + this.speed.y + ", and :" + level.jumpOnEnemySwitch);
+        if(level.jumpOnEnemySwitch === false) {
+            level.jumpOnEnemySwitch = true;
+            console.log("JUMPED ON AN ENEMY (" + otherActor.health + ") with speed: (" + this.speed.x + "," + this.speed.y + ")");
+            otherActor.decrementHealth();
+            console.log("NEW HEALTH (" + otherActor.health + ")");
+            
+            if(otherActor.health<=0) {
+                console.log("Enemy Killed");
+                //enemy killed
+                //remove otherActor from the array level.actors
+                level.actors //TODO
+                otherActor = null;
+            }
+        }
+    } else {
+        if(level.jumpOnEnemySwitch === true) {
+            level.jumpOnEnemySwitch = false;
+            console.log("jumpOnEnemySwitch restored");
+        }
     }
 
-    if (otherActor) //qui serve solo per prendere le monete
-        level.playerTouched(otherActor.type, otherActor);
-
-
+    
+    if (otherActor) {
+        level.playerTouched(otherActor);
+    }
+    
     var otherAnimator = level.animatorAt(this);
     if (otherAnimator)
         level.playerTouchedAnimator(otherAnimator);
@@ -567,7 +588,8 @@ Player.prototype.act = function (step, level, keys) {
 };
 
 //se passo actor e' per prendere le monete, se no e' per lava, muri, stalattiti ecc
-Level.prototype.playerTouched = function (type, actor) {
+Level.prototype.playerTouched = function (actor) {
+    var type = actor.type;
     if ((type === "lava" || type === "stalactite" || type === "enemy") && this.status === null) {
         this.status = "lost";
         this.finishDelay = 1;
