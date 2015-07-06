@@ -1,3 +1,5 @@
+[![Code Climate](https://codeclimate.com/github/Ks89/JSPlatformGame/badges/gpa.svg)](https://codeclimate.com/github/Ks89/JSPlatformGame)
+
 # JSPlatformGame [ALPHA]
 
 A simple platform game written in JavaScript and CSS
