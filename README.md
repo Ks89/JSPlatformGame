@@ -1,6 +1,5 @@
 [![License Apache 2](https://img.shields.io/badge/license-Apache%202-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 ![](https://reposs.herokuapp.com/?path=Ks89/JSPlatformGame)
-
 [![Build Status](https://travis-ci.org/Ks89/JSPlatformGame.svg?branch=master)](https://travis-ci.org/Ks89/JSPlatformGame)
 [![Code Climate](https://codeclimate.com/github/Ks89/JSPlatformGame/badges/gpa.svg)](https://codeclimate.com/github/Ks89/JSPlatformGame)
 
