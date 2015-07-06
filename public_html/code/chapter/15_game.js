@@ -41,7 +41,6 @@ function Level(plan) {
     //by default, axy is x=id and y=0, because adding more delay isn't really necessary.
     //delay connected to animator isn't implemented, bacause not necessary, at the moment.
 
-
     for (var y = 0; y < this.height; y++) { //righe
         //ad ogni ciclo ci metto la riga in line
         var line = plan[y];
@@ -56,45 +55,13 @@ function Level(plan) {
             if ((ch === "s" || ch === "a" || ch === "e") && x + 1 < this.width && x + 2 < this.width) {
                 id = line[x + 1];
                 delay = line[x + 2];
-                console.log("ch: " + ch + ", id: " + id + ", delay: " + delay);
-                //console.log("Char with ch: " + ch + " with ID=" + id + " and delay= " + delay + " in pos (x,y) = (" + x + "," + y + ")");
             }
 
-            //mi da l'oggetto che puo' essere Player, Coin, Lava ecc...
-            //actorChars e' una funzione che restituisce oggetti
-            var Actor = actorChars[ch];
-            //crea nuovo Actor e lo mette nel vettore con 
-            //coordinate x,y e il carattere trovato in plan
-            //eventualmente anche quello successivo che rappresenta l'id
+            //manage actors
+            fieldType = manageActors(this, ch, id, delay, new Vector(x, y));
 
-            if (Actor) {
-                console.log("actor: id: " + id + ", delay: " + delay);
-                console.log("inNumber id: " + isNumber(id) + "  ,  delay: " + isNumber(delay));
-                if (isNumber(id) && isNumber(delay)) {
-                    console.log("actor with numerical id and delay");
-                    //cioe' e' un actor con un id associato, il quale sara'
-                    //anche in uno o piu' Animator, che attivano questo Actor a muoversi ecc..
-                    this.actors.push(new Actor(new Vector(x, y), ch, id, delay));
-                } else {
-                    this.actors.push(new Actor(new Vector(x, y), ch));
-                }
-
-                //x e ! sono gli unici totalmente fissi, quindi non sono attori e
-                //quindi li tratto in modo diverso
-            } else if (ch === "x") {    
-                fieldType = "wall";
-            } else if (ch === "!") {
-                fieldType = "lava";
-            }
-            
-            var Animator = staticSmartObjectChars[ch];
-            if (Animator) {
-                //console.log("animator: " + id + ", delay: " + delay);
-                if (isNumber(id) && isNumber(delay)) {
-                    //console.log("animator added with ch: " + ch + " and with id: " + id + " and delay: " + delay);
-                    this.animators.push(new Animator(new Vector(x, y), ch, id, delay));
-                }
-            }
+            //manageAnimators
+            manageAnimators(this, ch, id, delay, new Vector(x, y));
 
             gridLine.push(fieldType);
         }
@@ -102,10 +69,6 @@ function Level(plan) {
         //dato in "plan" la mappa del livello questo metodo crea "grid" 
         //sempre in array di array ma con contenuto nelle celle: wall,lava,null
         this.grid.push(gridLine);
-    }
-
-    function isNumber(ch) {
-        return ch === "0" || ch === "1" || ch === "2" || ch === "3" || ch === "4" || ch === "5" || ch === "6" || ch === "7" || ch === "8" || ch === "9";
     }
 
     //per trovare tra gli actors il player e salvarlo in player
@@ -125,16 +88,61 @@ function Level(plan) {
     this.status = this.finishDelay = null;
 }
 
+function manageAnimators(level, ch, id, delay, vector) {
+    var Animator = staticSmartObjectChars[ch];
+    if (Animator && isNumber(id) && isNumber(delay)) {
+            //console.log("animator added with ch: " + ch + " and with id: " + id + " and delay: " + delay);
+            level.animators.push(new Animator(vector, ch, id, delay));
+    }
+}
+
+function manageActors(level, ch, id, delay, vector) {
+    var fieldType = null;
+
+    //mi da l'oggetto che puo' essere Player, Coin, Lava ecc...
+    //actorChars e' una funzione che restituisce oggetti
+    var Actor = actorChars[ch];
+    //crea nuovo Actor e lo mette nel vettore con 
+    //coordinate x,y e il carattere trovato in plan
+    //eventualmente anche quello successivo che rappresenta l'id
+    if (Actor) {
+        console.log("actor: id: " + id + ", delay: " + delay);
+        console.log("inNumber id: " + isNumber(id) + "  ,  delay: " + isNumber(delay));
+        if (isNumber(id) && isNumber(delay)) {
+            console.log("actor with numerical id and delay");
+            //cioe' e' un actor con un id associato, il quale sara'
+            //anche in uno o piu' Animator, che attivano questo Actor a muoversi ecc..
+            level.actors.push(new Actor(vector, ch, id, delay));
+        } else {
+            level.actors.push(new Actor(vector, ch));
+        }
+
+        //x e ! sono gli unici totalmente fissi, quindi non sono attori e
+        //quindi li tratto in modo diverso
+    } else if (ch === "x") {    
+        fieldType = "wall";
+    } else if (ch === "!") {
+        fieldType = "lava";
+    }
+
+    return fieldType;
+}
+
+function isNumber(ch) {
+        return !isNaN(ch);
+}
+
 //metodo per scoprire se il livello e' finito
 Level.prototype.isFinished = function () {
     return this.status !== null && this.finishDelay < 0;
 };
 
+/*
 function Actor(pos, ch, id) {
     this.pos = pos;
     this.ch = ch;
     this.id = id;
-}
+}*/
 
 
 function Vector(x, y) {
@@ -674,8 +682,9 @@ function runAnimation(frameFunc) {
             stop = frameFunc(timeStep) === false;
         }
         lastTime = time;
-        if (!stop)
+        if (!stop) {
             requestAnimationFrame(frame);
+        }
     }
     requestAnimationFrame(frame);
 }
@@ -752,7 +761,7 @@ function runGame(plans, Display) {
                 lives -= 1;
                 if (lives === 0) {
                     console.log("lost");
-                    alert("No more lives");
+                    window.alert("No more lives");
                     startLevel(0);
                 } else {
                     startLevel(n);
@@ -766,5 +775,3 @@ function runGame(plans, Display) {
     }
     startLevel(0);
 }
-
-
