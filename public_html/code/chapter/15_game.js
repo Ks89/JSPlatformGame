@@ -61,7 +61,10 @@ function Level(plan) {
             fieldType = manageActors(this, ch, id, delay, new Vector(x, y));
 
             //manageAnimators
-            manageAnimators(this, ch, id, delay, new Vector(x, y));
+            var animator = manageAnimators(ch, id, delay, new Vector(x, y));
+            if(animator !== null) {
+                this.animators.push(animator);
+            }
 
             gridLine.push(fieldType);
         }
@@ -87,18 +90,16 @@ function Level(plan) {
     //per una piccola animazione
     this.status = this.finishDelay = null;
 }
-
-function manageAnimators(level, ch, id, delay, vector) {
-    var Animator = staticSmartObjectChars[ch];
-    if (Animator && isNumber(id) && isNumber(delay)) {
-            //console.log("animator added with ch: " + ch + " and with id: " + id + " and delay: " + delay);
-            level.animators.push(new Animator(vector, ch, id, delay));
+function manageAnimators(ch, id, delay, vector) {
+    if (staticSmartObjectChars[ch] && isNumber(id) && isNumber(delay)) {
+        //console.log("animator added with ch: " + ch + " and with id: " + id + " and delay: " + delay);
+        return new Animator(vector, ch, id, delay);
+    } else {
+        return null;
     }
 }
 
 function manageActors(level, ch, id, delay, vector) {
-    var fieldType = null;
-
     //mi da l'oggetto che puo' essere Player, Coin, Lava ecc...
     //actorChars e' una funzione che restituisce oggetti
     var Actor = actorChars[ch];
@@ -120,12 +121,12 @@ function manageActors(level, ch, id, delay, vector) {
         //x e ! sono gli unici totalmente fissi, quindi non sono attori e
         //quindi li tratto in modo diverso
     } else if (ch === "x") {    
-        fieldType = "wall";
+        return "wall";
     } else if (ch === "!") {
-        fieldType = "lava";
+        return "lava";
     }
 
-    return fieldType;
+    return null;
 }
 
 function isNumber(ch) {
