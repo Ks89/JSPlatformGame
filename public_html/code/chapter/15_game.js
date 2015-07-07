@@ -439,8 +439,8 @@ Level.prototype.animatorAt = function (actor) {
     }
 };
 
-//actors and actions subsections
-//pag 288
+
+
 var maxStep = 0.05;
 
 Level.prototype.animate = function (step, keys) {
@@ -450,22 +450,24 @@ Level.prototype.animate = function (step, keys) {
     
     while (step > 0) {
         var thisStep = Math.min(step, maxStep);
-        this.actors.forEach(function (actor) {
-            //mi permette di animare solo gli actors con activation===true
-            //cioe' solo quelli abilitati di default, o abilitati grazie
-            //all'nimator che setta in modo manuale a true, l'activation.
-            if (actor.activation === true) {
-                if ((actor.type === "stalactite" || actor.type === "enemy") && actor.delayActivation > 0) {
-                    //console.log("actor type: " + actor.type +  ", id: " + actor.id + ", delay before= " + actor.delayActivation);
-                    actor.decrementDelay();
-                    //console.log("actor type: " + actor.type +  ", id: " + actor.id + ", delay after= " + actor.delayActivation);
-                }
-                if (actor.delayActivation === 0) {
-                    actor.act(thisStep, this, keys);
-                }
-            }
-        }, this);
+        this.actors.forEach(iterateActors, this);
         step -= thisStep;
+    }
+    
+    function iterateActors(actor) {
+        //mi permette di animare solo gli actors con activation===true
+        //cioe' solo quelli abilitati di default, o abilitati grazie
+        //all'nimator che setta in modo manuale a true, l'activation.
+        if (actor.activation === true) {
+            if ((actor.type === "stalactite" || actor.type === "enemy") && actor.delayActivation > 0) {
+                //console.log("actor type: " + actor.type +  ", id: " + actor.id + ", delay before= " + actor.delayActivation);
+                actor.decrementDelay();
+                //console.log("actor type: " + actor.type +  ", id: " + actor.id + ", delay after= " + actor.delayActivation);
+            }
+            if (actor.delayActivation === 0) {
+                actor.act(thisStep, this, keys);
+            }
+        }
     }
 };
 
