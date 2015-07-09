@@ -157,7 +157,7 @@ CanvasDisplay.prototype.drawActors = function () {
             var tileX;
             
             if (actor.type === "lava") {
-                tileX = 1 * scale;
+                tileX = scale; //it's like 1 * scale
             } else if (actor.type === "stalactite") {
                 tileX = 2 * scale;
             } else if (actor.type === "enemy") {
